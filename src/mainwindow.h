@@ -26,10 +26,16 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QTableWidgetItem>
 #include <QTimer>
-
+#include <QKeyEvent>
 #include "modbus.h"
 #include "ui_about.h"
+#include "ui_macro_help.h"
+
+namespace Ui {
+class MainWindow;
+}
 
 
 class AboutDialog : public QDialog, public Ui::AboutDialog
@@ -40,10 +46,19 @@ public:
     {
         setupUi( this );
         aboutTextLabel->setText(
-            aboutTextLabel->text().arg( "0.3.0" ) );
+            aboutTextLabel->text().arg( "0.4.0" ) );
     }
 } ;
 
+class MacroHelpDialog : public QDialog, public Ui::MacroHelpDialog
+{
+public:
+    MacroHelpDialog ( QWidget * _parent ) :
+        QDialog( _parent )
+    {
+        setupUi( this );
+    }
+} ;
 
 
 namespace Ui
@@ -65,6 +80,7 @@ public:
                 uint16_t nb,
                 uint16_t expectedCRC,
                 uint16_t actualCRC );
+    void busMonitorRawDataSend( uint8_t * data, uint8_t dataLen, bool addNewline );
     void busMonitorRawData( uint8_t * data, uint8_t dataLen, bool addNewline );
 
     static void stBusMonitorAddItem( modbus_t * modbus,
@@ -84,11 +100,27 @@ private slots:
     void pollForDataOnBus( void );
     void openBatchProcessor();
     void aboutQModBus( void );
+    void showMacroHelp( void );
+
     void onRtuPortActive(bool active);
     void onAsciiPortActive(bool active);
     void onTcpPortActive(bool active);
     void resetStatus( void );
     void setStatusError(const QString &msg);
+    void checkBoxHexAddress_toggle( bool hex_dec );
+    void on_pbFuncCode_3_clicked();
+    void on_pbFuncCode_4_clicked();
+    void on_pbFuncCode_6_clicked();
+    void on_pbFuncCode_16_clicked();
+
+    void on_regTable_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn);
+
+    void on_regTable_itemChanged(QTableWidgetItem *item);
+//    void on_MacroButton_clicked();
+
+//    void on_pbMacroLoad_clicked();
+
+//    void on_pbMacroSave_clicked();
 
 private:
     void keyPressEvent(QKeyEvent* event);
@@ -100,8 +132,21 @@ private:
     QLabel * m_statusText;
     QTimer * m_pollTimer;
     QTimer * m_statusTimer;
+    QTimer mScreenRefreshTimer;
     bool m_tcpActive;
     bool m_poll;
+    void regTable_add(int i, bool is16Bit, uint16_t addr, QString dataType, int32_t data );
+    void log( QString txt );
+    void logf( const char *frm, ... );
+    bool MacroToRequest(QString strMacro);
+
+    void if_Read_clicked(void);
+    void on_pb_Right_clicked(int step);
+
+    DWORD LastTick;
+    DWORD DataNoByte;
+    void DataRawAddHtml( const QString &textHtml );
+
 };
 
 #endif // MAINWINDOW_H

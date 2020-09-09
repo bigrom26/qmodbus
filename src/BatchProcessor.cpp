@@ -69,10 +69,13 @@ void BatchProcessor::start()
 		return;
 	}
 
-	m_timer.start( ui->intervalSpinBox->value() * 1000 );
+	m_timer.start( ui->intervalSpinBox->value() );
 
 	ui->startButton->setEnabled( false );
 	ui->stopButton->setEnabled( true );
+	bSigned   =ui->cbSigned  ->checkState() == Qt::Checked;
+	bNegative =ui->cbNegative->checkState() == Qt::Checked;
+
 }
 
 
@@ -115,9 +118,18 @@ static inline int stringToHex( QString s )
 	return s.replace( "0x", "" ).toInt( NULL, 16 );
 }
 
+static int stringToInt( QString s )
+{
+    if ( s.left(2) == "0x") {
+        return s.mid(2).toInt(NULL,16);
+    }
+    return s.toInt();
+    //return s.replace( "0x", "" ).toInt( NULL, 16 );
+}
 
 
-
+// format for filed "<id>:<addr>,<addr>,...;<id>:<addr>,<addr>"
+// all <id> and <addr> int/hex formar C
 void BatchProcessor::runBatch()
 {
 	const int func = stringToHex( embracedString( ui->functionCode->currentText() ) );
@@ -125,19 +137,22 @@ void BatchProcessor::runBatch()
 	const QStringList slaves = ui->slaveEdit->text().split( ';' );
 
 	QTextStream out( &m_outputFile );
-
+	out << QDateTime::currentDateTime().toString("yyyyMMdd hhmm:ss.zzz");
 	foreach( const QString &slaveCfg, slaves )
 	{
 		if( slaveCfg.contains( ':' ) )
 		{
-			const int slaveID = slaveCfg.split( ':' ).first().toInt();
+            const QString strId =slaveCfg.split( ':' ).first();
+            const int slaveID = stringToInt( strId );
 			const QStringList addresses = slaveCfg.split( ':' ).last().split( ',' );
 			foreach( const QString &addr, addresses )
 			{
-				out << QDateTime::currentDateTime().toTime_t() << slaveID << ", " << addr.toInt() << ", " << sendModbusRequest( slaveID, func, addr.toInt() ) << endl;
+                out << ", " << strId << ", " << addr << ", " << sendModbusRequest( slaveID, func, stringToInt(addr) );
 			}
 		}
 	}
+	out << endl;
+
 }
 
 
@@ -225,14 +240,19 @@ QString BatchProcessor::sendModbusRequest( int slaveID, int func, int addr )
 
 	if( ret == num )
 	{
-		bool b_hex = false;//is16Bit && ui->checkBoxHexData->checkState() == Qt::Checked;
+		//bool b_hex = false;//is16Bit && ui->checkBoxHexData->checkState() == Qt::Checked;
 		QString qs_num;
 
 		for( int i = 0; i < num; ++i )
 		{
-			int data = is16Bit ? dest16[i] : dest[i];
+            int data;
+            if ( bSigned )
+                data = is16Bit ? ((int16_t)dest16[i]) : ((int8_t)dest[i]);
+            else
+                data = is16Bit ? dest16[i] : dest[i];
 
-			qs_num += QString().sprintf( b_hex ? "0x%04x" : "%d", data);
+            if ( bNegative ) data = -data;
+            qs_num += QString().sprintf( bHex ? "0x%04x" : "%d", data);
 		}
 
 		return qs_num;

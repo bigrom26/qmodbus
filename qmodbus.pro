@@ -1,6 +1,6 @@
 TARGET = qmodbus
 TEMPLATE = app
-VERSION = 0.1.0
+VERSION = 0.2.6
 
 QT += gui widgets
 
@@ -48,12 +48,13 @@ win32 {
     LIBS += -lsetupapi -lws2_32
 }
 
-FORMS += forms/mainwindow.ui \
-    forms/about.ui	\
-    forms/BatchProcessor.ui \
-    forms/serialsettingswidget.ui \
-    forms/tcpipsettingswidget.ui \
-    forms/ipaddressctrl.ui
+FORMS += forms/mainwindow.ui
+FORMS += forms/about.ui
+FORMS += forms/BatchProcessor.ui
+FORMS += forms/serialsettingswidget.ui
+FORMS += forms/tcpipsettingswidget.ui
+FORMS += forms/ipaddressctrl.ui
+FORMS += forms/macro_help.ui
 
 RESOURCES += data/qmodbus.qrc
 

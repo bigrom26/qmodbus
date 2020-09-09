@@ -44,6 +44,9 @@ public:
 	BatchProcessor( QWidget *parent, modbus_t *modbus );
 	~BatchProcessor();
 
+    bool bSigned;
+    bool bHex;
+    bool bNegative;
 
 private slots:
 	void start();
